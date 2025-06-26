@@ -1,5 +1,5 @@
 /**
- * sccvgm.hpp -- VGM Driver for SCC
+ * sccvgm.hpp -- SCC VGM Driver
  * Copyright (C) 2001-2022 Mitsutaka Okazaki (EMU2149 class)
  * Copyright (c) 2014 Mitsutaka Okazaki (EMU2212 class)
  * Copyright (C) 2025 Yoji Suzuki (SccVgmDriver)
