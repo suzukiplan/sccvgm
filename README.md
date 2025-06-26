@@ -4,7 +4,7 @@ This program is a C++ single header format emulator that plays the VGM of the AY
 
 Some of the code included in the VGS-Zero implementation has been adapted to the MIT license for easy use.
 
-PSG と SCC のエミュレータコア部分は Digital Sound Antiques が公開している EMU2149 と EMU2212 を使用しています。
+The PSG and SCC emulator core parts use the EMU2149 and EMU2212 published by Digital Sound Antiques.
 
 - EMU2149: https://github.com/digital-sound-antiques/emu2149
 - EMU2212: https://github.com/digital-sound-antiques/emu2212
@@ -13,7 +13,7 @@ For example, it is intended for use in cases where you want to play SCC sound so
 
 ## How to Use
 
-Just add [sccvgm.hpp](nesvgm.hpp) to your project and `#include` it.
+Just add [sccvgm.hpp](sccvgm.hpp) to your project and `#include` it.
 
 ### 1. Include
 
