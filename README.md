@@ -52,6 +52,10 @@ scc->render(samplingBuffer, samplingNumber);
 - The quantization unit is fixed at 16 bits (2 bytes).
 - The `samplingNumber` is the size of `samplingBuffer` divided by 2.
 
+## Example
+
+We provide an [example](./example/) implementation of exporting SCC VGM files in wav format.
+
 ## License
 
 [MIT](LICENSE.txt)
