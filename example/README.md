@@ -10,6 +10,6 @@ make
 
 ## About Example Song
 
-Title: Battle Marine March - SCC version
-Composed by Yoji Suzuki
-About Battle Marine: https://store.steampowered.com/app/2824990/Battle_Marine/
+- Title: Battle Marine March - SCC version
+- Composed by Yoji Suzuki
+- About Battle Marine: https://store.steampowered.com/app/2824990/Battle_Marine/
