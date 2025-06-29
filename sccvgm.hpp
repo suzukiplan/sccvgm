@@ -835,17 +835,39 @@ class VgmDriver
         uint32_t loopCount;
     } vgm;
 
+    int masterVolume;
+    short waveMax;
+    short waveMin;
+
   public:
     VgmDriver(int rate = 44100)
     {
         emu.psg = new EMU2149(3579545, rate);
         emu.scc = new EMU2212(3579545, rate);
+        masterVolume = 600;
+        this->setWaveSize(95);
     }
 
     ~VgmDriver()
     {
         delete emu.psg;
         delete emu.scc;
+    }
+
+    void setMasterVolume(int masterVolume)
+    {
+        this->masterVolume = masterVolume;
+    }
+
+    void setWaveSize(int waveSizeInPercent)
+    {
+        if (waveSizeInPercent < 0) {
+            waveSizeInPercent = 0;
+        } else if (100 < waveSizeInPercent) {
+            waveSizeInPercent = 100;
+        }
+        this->waveMax = (short)((32767 * waveSizeInPercent) / 100);
+        this->waveMin = (short)((-32768 * waveSizeInPercent) / 100);
     }
 
     bool load(const uint8_t* data, size_t size)
@@ -908,13 +930,21 @@ class VgmDriver
                 this->execute();
             }
             vgm.wait--;
-            buf[cursor] = 0;
+            int w = 0;
             if (vgm.clocks[ET_PSG]) {
-                buf[cursor] += emu.psg->calc() << 1;
+                w += emu.psg->calc();
             }
             if (vgm.clocks[ET_SCC]) {
-                buf[cursor] += emu.scc->calc() << 1;
+                w += emu.scc->calc();
             }
+            w *= masterVolume;
+            w /= 100;
+            if (waveMax < w) {
+                w = waveMax;
+            } else if (w < waveMin) {
+                w = waveMin;
+            }
+            buf[cursor] = w;
             cursor++;
         }
     }
