@@ -833,6 +833,8 @@ class VgmDriver
         int wait;
         bool end;
         uint32_t loopCount;
+        uint32_t loopCycle;
+        uint32_t currentCycle;
     } vgm;
 
     int masterVolume;
@@ -953,6 +955,7 @@ class VgmDriver
     uint32_t getLoopCount() { return vgm.loopCount; }
     uint32_t getFrequencyPSG(int ch) { return emu.psg->getFrequency(ch); }
     uint32_t getFrequencySCC(int ch) { return emu.psg->getFrequency(ch); }
+    uint32_t getCurrentCycle() { return vgm.currentCycle; }
 
   private:
     void execute()
@@ -961,6 +964,9 @@ class VgmDriver
             return;
         }
         while (vgm.wait < 1) {
+            if (vgm.cursor == vgm.loopOffset) {
+                vgm.loopCycle = vgm.currentCycle;
+            }
             uint8_t cmd = vgm.data[vgm.cursor++];
             switch (cmd) {
                 case 0x31: // AY-3-8910 stereo mask (ignore)
@@ -995,15 +1001,23 @@ class VgmDriver
                     memcpy(&nn, &vgm.data[vgm.cursor], 2);
                     vgm.cursor += 2;
                     vgm.wait += nn;
+                    vgm.currentCycle += nn;
                     break;
                 }
-                case 0x62: vgm.wait += 735; break;
-                case 0x63: vgm.wait += 882; break;
+                case 0x62:
+                    vgm.wait += 735;
+                    vgm.currentCycle += 735;
+                    break;
+                case 0x63:
+                    vgm.wait += 882;
+                    vgm.currentCycle += 882;
+                    break;
                 case 0x66: {
                     // End of sound data
                     if (vgm.loopOffset) {
                         vgm.cursor = vgm.loopOffset;
                         vgm.loopCount++;
+                        vgm.currentCycle = vgm.loopCycle;
                         break;
                     } else {
                         vgm.end = true;
