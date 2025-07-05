@@ -1051,7 +1051,7 @@ class VgmDriver
                 case 0xFD:
                 case 0xFE:
                 case 0xFF:
-                    // Skip: Furnace outputs thies unsupport commands (use for labels?)
+                    // Skip: Furnace outputs thies unsupported commands (use for labels?)
                     break;
 
                 default:
