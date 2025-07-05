@@ -112,7 +112,7 @@ class EMU2149
     uint32_t getFrequency(int ch)
     {
         if (0 <= ch && ch < 3) {
-            return psg->freq[ch];
+            return 0 < psg->volume[ch] ? psg->freq[ch] : 0;
         } else {
             return 0;
         }
@@ -487,7 +487,7 @@ class EMU2212
     uint32_t getFrequency(int ch)
     {
         if (0 <= ch && ch < 6) {
-            return scc->freq[ch];
+            return 0 < scc->volume[ch] ? scc->freq[ch] : 0;
         } else {
             return 0;
         }
@@ -954,7 +954,7 @@ class VgmDriver
     bool isPlaying() { return !vgm.end; }
     uint32_t getLoopCount() { return vgm.loopCount; }
     uint32_t getFrequencyPSG(int ch) { return emu.psg->getFrequency(ch); }
-    uint32_t getFrequencySCC(int ch) { return emu.psg->getFrequency(ch); }
+    uint32_t getFrequencySCC(int ch) { return emu.scc->getFrequency(ch); }
     uint32_t getCurrentCycle() { return vgm.currentCycle; }
 
   private:
