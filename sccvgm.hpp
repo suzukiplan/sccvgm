@@ -1041,8 +1041,8 @@ class VgmDriver
                 case 0x7D:
                 case 0x7E:
                 case 0x7F:
-                    vgm.wait += cmd - 0x70;
-                    vgm.currentCycle += cmd - 0x70;
+                    vgm.wait += cmd - 0x6F;
+                    vgm.currentCycle += cmd - 0x6F;
                     break;
 
                 case 0xDD:
