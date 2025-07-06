@@ -913,6 +913,14 @@ class VgmDriver
         vgm.head = vgm.cursor;
         memcpy(&vgm.loopOffset, &data[0x1C], 4);
         vgm.loopOffset += vgm.loopOffset ? 0x1C : 0;
+
+        // calculate total cycle and loop cycle
+        while (execute(false)) {
+            vgm.wait = 0;
+        }
+        vgm.cursor = vgm.head;
+        vgm.loopCount = 0;
+        vgm.currentCycle = 0;
         return true;
     }
 
@@ -959,34 +967,8 @@ class VgmDriver
     uint32_t getFrequencyPSG(int ch) { return emu.psg->getFrequency(ch); }
     uint32_t getFrequencySCC(int ch) { return emu.scc->getFrequency(ch); }
     uint32_t getCurrentCycle() { return vgm.currentCycle; }
-
-    uint32_t getLengthCycle()
-    {
-        if (vgm.totalCycle) {
-            return vgm.totalCycle;
-        }
-        VgmContext backup;
-        memcpy(&backup, &vgm, sizeof(VgmContext));
-        vgm.end = false;
-        vgm.cursor = vgm.head;
-        vgm.currentCycle = 0;
-        while (execute(false)) {
-            vgm.wait = 0;
-        }
-        uint32_t result = vgm.currentCycle;
-        memcpy(&vgm, &backup, sizeof(VgmContext));
-        vgm.totalCycle = result;
-        return result;
-    }
-
-    uint32_t getLoopCycle()
-    {
-        if (vgm.loopCycle) {
-            return vgm.loopCycle;
-        }
-        getLengthCycle();
-        return vgm.loopCycle;
-    }
+    uint32_t getLengthCycle() { return vgm.totalCycle; }
+    uint32_t getLoopCycle() { return vgm.loopCycle; }
 
     void seek(uint32_t cycle)
     {
@@ -995,6 +977,8 @@ class VgmDriver
         vgm.end = false;
         vgm.cursor = vgm.head;
         vgm.currentCycle = 0;
+        vgm.loopCount = 0;
+        vgm.wait = 0;
         while (execute(true) && vgm.currentCycle < cycle) {
             vgm.wait = 0;
         }
@@ -1007,7 +991,7 @@ class VgmDriver
             return false;
         }
         while (vgm.wait < 1) {
-            if (vgm.cursor == vgm.loopOffset) {
+            if (vgm.loopOffset == vgm.cursor) {
                 vgm.loopCycle = vgm.currentCycle;
             }
             uint8_t cmd = vgm.data[vgm.cursor++];
@@ -1062,11 +1046,13 @@ class VgmDriver
                 case 0x66: {
                     // End of sound data
                     if (vgm.loopOffset) {
-                        vgm.cursor = vgm.loopOffset;
                         vgm.loopCount++;
+                        vgm.cursor = vgm.loopOffset;
+                        vgm.totalCycle = vgm.currentCycle;
                         vgm.currentCycle = vgm.loopCycle;
                         return false;
                     } else {
+                        vgm.totalCycle = vgm.currentCycle;
                         vgm.end = true;
                         return false;
                     }

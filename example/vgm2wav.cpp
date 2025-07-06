@@ -1,4 +1,3 @@
-#include "../sccvgm.hpp"
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -12,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include "../sccvgm.hpp"
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -100,6 +100,10 @@ int main(int argc, char* argv[])
     wh.bits = 16;
     wh.dsize = 0;
     fwrite(&wh, 1, sizeof(wh), fp);
+
+    puts("Song info:");
+    printf("- Loop Cycle: %u (%u sec)\n", scc.getLoopCycle(), scc.getLoopCycle() / 44100);
+    printf("- Total Cycle: %u (%u sec)\n", scc.getLengthCycle(), scc.getLengthCycle() / 44100);
 
     // render pcm
     int16_t buf[4410];
