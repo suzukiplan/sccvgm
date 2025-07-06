@@ -828,6 +828,7 @@ class VgmDriver
         const uint8_t* data;
         size_t size;
         int version;
+        int head;
         int cursor;
         int loopOffset;
         int wait;
@@ -835,6 +836,7 @@ class VgmDriver
         uint32_t loopCount;
         uint32_t loopCycle;
         uint32_t currentCycle;
+        uint32_t totalCycle;
     } vgm;
 
     int masterVolume;
@@ -908,6 +910,7 @@ class VgmDriver
 
         memcpy(&vgm.cursor, &data[0x34], 4);
         vgm.cursor += 0x40 - 0x0C;
+        vgm.head = vgm.cursor;
         memcpy(&vgm.loopOffset, &data[0x1C], 4);
         vgm.loopOffset += vgm.loopOffset ? 0x1C : 0;
         return true;
@@ -929,7 +932,7 @@ class VgmDriver
         int cursor = 0;
         while (cursor < samples) {
             if (vgm.wait < 1) {
-                this->execute();
+                this->execute(true);
             }
             vgm.wait--;
             int w = 0;
@@ -957,11 +960,39 @@ class VgmDriver
     uint32_t getFrequencySCC(int ch) { return emu.scc->getFrequency(ch); }
     uint32_t getCurrentCycle() { return vgm.currentCycle; }
 
+    uint32_t getLengthCycle()
+    {
+        if (vgm.totalCycle) {
+            return vgm.totalCycle;
+        }
+        VgmContext backup;
+        memcpy(&backup, &vgm, sizeof(VgmContext));
+        vgm.end = false;
+        vgm.cursor = vgm.head;
+        vgm.currentCycle = 0;
+        while (execute(false)) {
+            vgm.wait = 0;
+        }
+        uint32_t result = vgm.currentCycle;
+        memcpy(&vgm, &backup, sizeof(VgmContext));
+        vgm.totalCycle = result;
+        return result;
+    }
+
+    uint32_t getLoopCycle()
+    {
+        if (vgm.loopCycle) {
+            return vgm.loopCycle;
+        }
+        getLengthCycle();
+        return vgm.loopCycle;
+    }
+
   private:
-    void execute()
+    bool execute(bool emulation)
     {
         if (!vgm.data || vgm.end) {
-            return;
+            return false;
         }
         while (vgm.wait < 1) {
             if (vgm.cursor == vgm.loopOffset) {
@@ -977,7 +1008,9 @@ class VgmDriver
                     // AY-3-8910 reigster
                     uint8_t addr = vgm.data[vgm.cursor++];
                     uint8_t value = vgm.data[vgm.cursor++];
-                    emu.psg->writeReg(addr, value);
+                    if (emulation) {
+                        emu.psg->writeReg(addr, value);
+                    }
                     break;
                 }
                 case 0xD2: {
@@ -985,13 +1018,15 @@ class VgmDriver
                     uint8_t port = vgm.data[vgm.cursor++] & 0x7F;
                     uint8_t offset = vgm.data[vgm.cursor++];
                     uint8_t data = vgm.data[vgm.cursor++];
-                    switch (port) {
-                        case 0x00: emu.scc->write_waveform1(offset, data); break;
-                        case 0x01: emu.scc->write_frequency(offset, data); break;
-                        case 0x02: emu.scc->write_volume(offset, data); break;
-                        case 0x03: emu.scc->write_keyoff(data); break;
-                        case 0x04: emu.scc->write_waveform2(offset, data); break;
-                        case 0x05: emu.scc->write_test(data); break;
+                    if (emulation) {
+                        switch (port) {
+                            case 0x00: emu.scc->write_waveform1(offset, data); break;
+                            case 0x01: emu.scc->write_frequency(offset, data); break;
+                            case 0x02: emu.scc->write_volume(offset, data); break;
+                            case 0x03: emu.scc->write_keyoff(data); break;
+                            case 0x04: emu.scc->write_waveform2(offset, data); break;
+                            case 0x05: emu.scc->write_test(data); break;
+                        }
                     }
                     break;
                 }
@@ -1018,10 +1053,10 @@ class VgmDriver
                         vgm.cursor = vgm.loopOffset;
                         vgm.loopCount++;
                         vgm.currentCycle = vgm.loopCycle;
-                        break;
+                        return false;
                     } else {
                         vgm.end = true;
-                        return;
+                        return false;
                     }
                 }
 
@@ -1057,9 +1092,10 @@ class VgmDriver
                 default:
                     // Error: Detected an unsupported command
                     vgm.end = true;
-                    return;
+                    return false;
             }
         }
+        return true;
     }
 };
 
