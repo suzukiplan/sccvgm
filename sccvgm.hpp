@@ -988,6 +988,18 @@ class VgmDriver
         return vgm.loopCycle;
     }
 
+    void seek(uint32_t cycle)
+    {
+        emu.scc->reset();
+        emu.psg->reset();
+        vgm.end = false;
+        vgm.cursor = vgm.head;
+        vgm.currentCycle = 0;
+        while (execute(true) && vgm.currentCycle < cycle) {
+            vgm.wait = 0;
+        }
+    }
+
   private:
     bool execute(bool emulation)
     {
